@@ -1,0 +1,36 @@
+#!/bin/bash
+# ============================================================
+# Clock Crew — Build & Deploy to Synology NAS
+#
+# Thin wrapper — all logic lives in ../deploy/lib.sh
+# Hook: injects VAULT_URL/VAULT_TOKEN as build args for
+#       Next.js secret resolution at build time.
+#
+# Usage:
+#   npm run deploy              # full deploy
+#   npm run deploy -- --dry-run # validate without deploying
+#   npm run deploy -- --skip-pull
+#   npm run deploy -- --no-cache
+# ============================================================
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+IMAGE_NAME="clock-crew"
+DISPLAY_NAME="⏰ Clock Crew"
+
+# ── Inject Vault credentials as Docker build args ─────────────
+PRE_BUILD() {
+  if [ -f "${SCRIPT_DIR}/.env.deploy" ]; then
+    set -a; source "${SCRIPT_DIR}/.env.deploy"; set +a
+    info "Loaded .env.deploy"
+  fi
+  if [ -n "${VAULT_URL:-}" ]; then
+    BUILD_ARGS="--build-arg VAULT_URL=${VAULT_URL}"
+    info "Vault URL: ${VAULT_URL}"
+  fi
+  if [ -n "${VAULT_TOKEN:-}" ]; then
+    BUILD_ARGS="${BUILD_ARGS} --build-arg VAULT_TOKEN=${VAULT_TOKEN}"
+    info "Vault token: ****${VAULT_TOKEN: -8}"
+  fi
+}
+
+source "${SCRIPT_DIR}/../deploy/lib.sh"
