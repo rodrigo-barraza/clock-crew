@@ -389,6 +389,19 @@ export default function DiscordChatComponent({ messageCount = 500, joinMode = fa
         }
       });
 
+      // ── Deleted messages ────────────────────────────────────────
+      es.addEventListener("delete", (e) => {
+        try {
+          const { ids } = JSON.parse(e.data);
+          if (!ids?.length) return;
+
+          const deletedSet = new Set(ids);
+          setMessages((prev) => prev.filter((msg) => !deletedSet.has(msg.id)));
+        } catch (err) {
+          console.error("[DiscordChat] Delete event parse error:", err);
+        }
+      });
+
       // ── Error handling with auto-reconnect ──────────────────────
       // EventSource auto-reconnects on network errors. We only need
       // to handle the case where the connection is permanently lost.
