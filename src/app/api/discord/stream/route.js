@@ -4,18 +4,30 @@
 // Proxies the tools-api SSE stream to the browser. The browser
 // connects via EventSource to this Next.js route, which in turn
 // opens a persistent connection to tools-api and pipes the
-// events through. Guild/channel are hardcoded for security.
+// events through. Guild is hardcoded for security; channel is
+// selectable from a whitelist.
 // ============================================================
 
 const TOOLS_API_URL = process.env.TOOLS_API_URL || "http://192.168.86.2:5590";
 const GUILD_ID = "249010731910037507"; // Clock Crew
-const CHANNEL_ID = "671089694397956116"; // #general-chat
+
+// Whitelist of allowed channel IDs (prevents arbitrary channel access)
+const ALLOWED_CHANNELS = new Set([
+  "671089694397956116", // #general-chat
+  "676318241689436170", // #memes
+]);
+
+const DEFAULT_CHANNEL = "671089694397956116";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 500);
+  const channelId = searchParams.get("channelId") || DEFAULT_CHANNEL;
 
-  const upstreamUrl = `${TOOLS_API_URL}/discord/messages/stream?guildId=${GUILD_ID}&channelId=${CHANNEL_ID}&limit=${limit}&includeBots=true`;
+  // Validate channel ID against whitelist
+  const safeChannelId = ALLOWED_CHANNELS.has(channelId) ? channelId : DEFAULT_CHANNEL;
+
+  const upstreamUrl = `${TOOLS_API_URL}/discord/messages/stream?guildId=${GUILD_ID}&channelId=${safeChannelId}&limit=${limit}&includeBots=true`;
 
   try {
     const upstream = await fetch(upstreamUrl, {

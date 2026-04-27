@@ -7,19 +7,19 @@ const inter = Inter({
 });
 
 const SITE_URL = "https://clock-crew.com";
-const SITE_NAME = "Clock Crew";
+const SITE_NAME = "The Clock Crew";
 const SITE_DESCRIPTION =
   "The Clock Crew — the legendary Newgrounds Flash animation collective born in 2002. Home of StrawberryClock, the king of the portal, and the iconic clock characters that defined early internet culture.";
 
 export const metadata = {
   // ── Core ──────────────────────────────────────────────────────
   title: {
-    default: "Clock Crew — Newgrounds Flash Animation Collective",
-    template: "%s | Clock Crew",
+    default: "The Clock Crew — Newgrounds Flash Animation Collective",
+    template: "%s | The Clock Crew",
   },
   description: SITE_DESCRIPTION,
   keywords: [
-    "Clock Crew",
+    "The Clock Crew",
     "Newgrounds",
     "Flash animation",
     "StrawberryClock",
@@ -32,7 +32,7 @@ export const metadata = {
     "internet animation",
     "B",
     "clock day",
-    "Newgrounds Clock Crew",
+    "The Newgrounds Clock Crew",
     "SWF animations",
     "Flash movies",
     "Macromedia Flash",
@@ -61,7 +61,7 @@ export const metadata = {
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
-    title: "Clock Crew — Newgrounds Flash Animation Collective",
+    title: "The Clock Crew — Newgrounds Flash Animation Collective",
     description: SITE_DESCRIPTION,
     url: SITE_URL,
     locale: "en_US",
@@ -70,7 +70,7 @@ export const metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Clock Crew — Newgrounds Flash Animation Community",
+        alt: "The Clock Crew — Newgrounds Flash Animation Community",
         type: "image/png",
       },
     ],
@@ -79,7 +79,7 @@ export const metadata = {
   // ── Twitter Card ─────────────────────────────────────────────
   twitter: {
     card: "summary_large_image",
-    title: "Clock Crew — Newgrounds Flash Animation Collective",
+    title: "The Clock Crew — Newgrounds Flash Animation Collective",
     description: SITE_DESCRIPTION,
     images: ["/og-image.png"],
   },
@@ -112,8 +112,8 @@ export const metadata = {
 
   // ── Other ────────────────────────────────────────────────────
   category: "entertainment",
-  creator: "Clock Crew",
-  publisher: "Clock Crew",
+  creator: "The Clock Crew",
+  publisher: "The Clock Crew",
   applicationName: SITE_NAME,
   referrer: "origin-when-cross-origin",
   formatDetection: {
@@ -127,8 +127,8 @@ export const metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Clock Crew",
-  alternateName: ["CC", "The Clock Crew", "Newgrounds Clock Crew"],
+  name: "The Clock Crew",
+  alternateName: ["CC", "Clock Crew", "Newgrounds Clock Crew"],
   url: SITE_URL,
   logo: `${SITE_URL}/icon-512.png`,
   description: SITE_DESCRIPTION,

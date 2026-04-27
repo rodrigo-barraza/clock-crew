@@ -144,7 +144,8 @@ a:hover {
 .hero::before {
   content: "";
   position: absolute;
-  top: 50%;
+  /* Idle: origin sits well below center for a "buried sun" feel */
+  top: 75%;
   left: 50%;
   width: 200vmax;
   height: 200vmax;
@@ -173,24 +174,28 @@ a:hover {
   );
   margin-top: -100vmax;
   margin-left: -100vmax;
-  will-change: transform;
+  will-change: transform, top;
   opacity: 0.4;
   filter: saturate(0.5) brightness(0.6);
   /* 3s ease-out when transitioning BACK from energized → idle */
   transition:
     opacity 3s ease-out,
-    filter 3s ease-out;
+    filter 3s ease-out,
+    top 3s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 0;
 }
 
-/* Energized: vivid colors, higher opacity (spin speed handled by JS) */
+/* Energized: vivid colors, higher opacity, raised center (spin speed handled by JS) */
 .hero--energized::before {
+  /* Raise the sunburst origin to true center — "sunrise" */
+  top: 50%;
   opacity: 0.8;
   filter: saturate(1.2) brightness(1);
   /* Snap in fast on hover */
   transition:
     opacity 300ms ease,
-    filter 300ms ease;
+    filter 300ms ease,
+    top 5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ── Center/edge vignette ─────────────────────────────────────── */

@@ -40,32 +40,19 @@ function extractTenorUrls(content) {
 }
 
 // ── Discord Custom Emoji ─────────────────────────────────────────
-// Matches <:name:id> (static) and <a:name:id> (animated)
-const CUSTOM_EMOJI_RE = /<(a?):([\w]+):(\d+)>/g;
+const CUSTOM_EMOJI_RE = /<(a?):(\w+):(\d+)>/g;
 
-/**
- * Build a Discord CDN URL for a custom server emoji.
- * Animated emojis use .gif, static use .webp for optimal quality.
- */
 function emojiUrl(id, animated) {
   const ext = animated ? "gif" : "webp";
   return `https://cdn.discordapp.com/emojis/${id}.${ext}?size=48&quality=lossless`;
 }
 
 // ── Format Discord message content ───────────────────────────────
-// Renders @mentions, URLs, and custom server emojis inline.
-// Uses raw `content` for emoji parsing (cleanContent strips them to :name: text).
-// Falls back to cleanContent for @mention resolution.
 function formatContent(content, cleanContent) {
-  // Prefer cleanContent for @mention resolution, but use raw content as source
-  // for custom emoji tags since cleanContent strips them to plain ":name:" text.
   const text = cleanContent || content || "";
   const rawContent = content || "";
   if (!text) return null;
 
-  // Collect custom emoji data from raw content into a lookup so we can
-  // match against both the raw <:name:id> tokens AND the :name: fallback
-  // that cleanContent produces.
   const emojiMap = new Map();
   let emojiMatch;
   CUSTOM_EMOJI_RE.lastIndex = 0;
@@ -74,9 +61,6 @@ function formatContent(content, cleanContent) {
     emojiMap.set(name, { animated: animated === "a", id, name });
   }
 
-  // Build a combined split regex that captures @mentions, URLs, custom emoji
-  // tokens (raw form), AND the :name: fallback form from cleanContent.
-  // The order of alternation matters — more specific patterns first.
   const emojiRawPattern = "<a?:[\\w]+:\\d+>";
   const emojiCleanPattern = emojiMap.size > 0
     ? `:(?:${[...emojiMap.keys()].map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")}):`
@@ -86,10 +70,9 @@ function formatContent(content, cleanContent) {
     emojiRawPattern,
     ...(emojiCleanPattern ? [emojiCleanPattern] : []),
     "@[\\w.]+",
-    "https?:\\/\/\\S+",
+    "https?:\\/\\/\\S+",
   ];
   const splitRe = new RegExp(`(${splitParts.join("|")})`, "g");
-
   const segments = text.split(splitRe);
 
   if (segments.length <= 1 && emojiMap.size === 0) {
@@ -100,65 +83,32 @@ function formatContent(content, cleanContent) {
     <span>
       {segments.map((seg, i) => {
         if (!seg) return null;
-
-        // ── Custom emoji (raw form from content) ──────────────
-        const rawEmojiMatch = /^<(a?):([\w]+):(\d+)>$/.exec(seg);
+        const rawEmojiMatch = /^<(a?):(\w+):(\d+)>$/.exec(seg);
         if (rawEmojiMatch) {
           const [, animated, name, id] = rawEmojiMatch;
           return (
-            <img
-              key={i}
-              src={emojiUrl(id, animated === "a")}
-              alt={`:${name}:`}
-              title={`:${name}:`}
-              className={styles.customEmoji}
-              draggable={false}
-              loading="lazy"
-            />
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={i} src={emojiUrl(id, animated === "a")} alt={`:${name}:`}
+              title={`:${name}:`} className={styles.customEmoji} draggable={false} loading="lazy" />
           );
         }
-
-        // ── Custom emoji (cleanContent :name: fallback) ───────
-        const cleanEmojiMatch = /^:([\w]+):$/.exec(seg);
+        const cleanEmojiMatch = /^:(\w+):$/.exec(seg);
         if (cleanEmojiMatch && emojiMap.has(cleanEmojiMatch[1])) {
           const emoji = emojiMap.get(cleanEmojiMatch[1]);
           return (
-            <img
-              key={i}
-              src={emojiUrl(emoji.id, emoji.animated)}
-              alt={`:${emoji.name}:`}
-              title={`:${emoji.name}:`}
-              className={styles.customEmoji}
-              draggable={false}
-              loading="lazy"
-            />
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={i} src={emojiUrl(emoji.id, emoji.animated)} alt={`:${emoji.name}:`}
+              title={`:${emoji.name}:`} className={styles.customEmoji} draggable={false} loading="lazy" />
           );
         }
-
-        // ── @mention ──────────────────────────────────────────
         if (seg.startsWith("@")) {
-          return (
-            <span key={i} className={styles.mention}>
-              {seg}
-            </span>
-          );
+          return <span key={i} className={styles.mention}>{seg}</span>;
         }
-
-        // ── URL ───────────────────────────────────────────────
         if (/^https?:\/\//.test(seg)) {
-          // Skip Tenor URLs — rendered as inline GIFs below
-          if (TENOR_URL_RE.test(seg)) {
-            TENOR_URL_RE.lastIndex = 0;
-            return null;
-          }
+          if (TENOR_URL_RE.test(seg)) { TENOR_URL_RE.lastIndex = 0; return null; }
           const display = seg.length > 50 ? seg.substring(0, 47) + "..." : seg;
-          return (
-            <a key={i} href={seg} target="_blank" rel="noopener noreferrer">
-              {display}
-            </a>
-          );
+          return <a key={i} href={seg} target="_blank" rel="noopener noreferrer">{display}</a>;
         }
-
         return <span key={i}>{seg}</span>;
       })}
     </span>
@@ -173,36 +123,18 @@ function formatTimestamp(isoString) {
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
   const isYesterday = date.toDateString() === yesterday.toDateString();
-
-  const time = date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-
+  const time = date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
   if (isToday) return `Today at ${time}`;
   if (isYesterday) return `Yesterday at ${time}`;
-  return `${date.toLocaleDateString("en-US", {
-    month: "2-digit",
-    day: "2-digit",
-    year: "numeric",
-  })} ${time}`;
+  return `${date.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })} ${time}`;
 }
 
 function formatShortTime(isoString) {
-  return new Date(isoString).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
+  return new Date(isoString).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
 }
 
 function formatDateSeparator(isoString) {
-  return new Date(isoString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return new Date(isoString).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 }
 
 // ── Message grouping ─────────────────────────────────────────────
@@ -222,41 +154,20 @@ function isDifferentDay(a, b) {
 function TenorEmbed({ url }) {
   const [gifUrl, setGifUrl] = useState(null);
   const [error, setError] = useState(false);
-
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/tenor/oembed?url=${encodeURIComponent(url)}`)
       .then((res) => res.ok ? res.json() : Promise.reject())
-      .then((data) => {
-        if (!cancelled && data.gifUrl) setGifUrl(data.gifUrl);
-      })
+      .then((data) => { if (!cancelled && data.gifUrl) setGifUrl(data.gifUrl); })
       .catch(() => { if (!cancelled) setError(true); });
     return () => { cancelled = true; };
   }, [url]);
-
   if (error) return null;
-  if (!gifUrl) {
-    return (
-      <div className={styles.tenorPlaceholder}>
-        <div className={styles.tenorSpinner} />
-      </div>
-    );
-  }
-
+  if (!gifUrl) return <div className={styles.tenorPlaceholder}><div className={styles.tenorSpinner} /></div>;
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={styles.attachmentLink}
-    >
+    <a href={url} target="_blank" rel="noopener noreferrer" className={styles.attachmentLink}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={gifUrl}
-        alt="Tenor GIF"
-        className={styles.tenorGif}
-        loading="lazy"
-      />
+      <img src={gifUrl} alt="Tenor GIF" className={styles.tenorGif} loading="lazy" />
     </a>
   );
 }
@@ -264,58 +175,27 @@ function TenorEmbed({ url }) {
 function TenorEmbeds({ content }) {
   const urls = extractTenorUrls(content);
   if (!urls.length) return null;
-  return (
-    <div className={styles.attachments}>
-      {urls.map((url, i) => <TenorEmbed key={i} url={url} />)}
-    </div>
-  );
+  return <div className={styles.attachments}>{urls.map((url, i) => <TenorEmbed key={i} url={url} />)}</div>;
 }
 
 // ── Image Attachments ────────────────────────────────────────────
 function ImageAttachments({ attachments }) {
   if (!attachments?.length) return null;
-
-  const images = attachments.filter(
-    (a) => a.contentType?.startsWith("image/") && (a.url || a.proxyURL),
-  );
-
+  const images = attachments.filter((a) => a.contentType?.startsWith("image/") && (a.url || a.proxyURL));
   if (!images.length) return null;
-
   return (
     <div className={styles.attachments}>
       {images.map((img, i) => {
         const src = img.proxyURL || img.url;
-        // Constrain to max 400px wide, preserve aspect ratio
-        const maxW = 400;
-        const maxH = 300;
-        let w = img.width || maxW;
-        let h = img.height || maxH;
-        if (w > maxW) {
-          h = Math.round(h * (maxW / w));
-          w = maxW;
-        }
-        if (h > maxH) {
-          w = Math.round(w * (maxH / h));
-          h = maxH;
-        }
-
+        const maxW = 400, maxH = 300;
+        let w = img.width || maxW, h = img.height || maxH;
+        if (w > maxW) { h = Math.round(h * (maxW / w)); w = maxW; }
+        if (h > maxH) { w = Math.round(w * (maxH / h)); h = maxH; }
         return (
-          <a
-            key={i}
-            href={img.url || src}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.attachmentLink}
-          >
+          <a key={i} href={img.url || src} target="_blank" rel="noopener noreferrer" className={styles.attachmentLink}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={src}
-              alt={img.name || "attachment"}
-              width={w}
-              height={h}
-              className={styles.attachmentImage}
-              loading="lazy"
-            />
+            <img src={src} alt={img.name || "attachment"} width={w} height={h}
+              className={styles.attachmentImage} loading="lazy" />
           </a>
         );
       })}
@@ -323,42 +203,152 @@ function ImageAttachments({ attachments }) {
   );
 }
 
+// ── Status Indicator ─────────────────────────────────────────────
+function StatusDot({ status }) {
+  const colors = { online: "#23a559", idle: "#f0b232", dnd: "#f23f43" };
+  return (
+    <span className={styles.statusDot} style={{ background: colors[status] || "#80848e" }}
+      title={status} />
+  );
+}
+
+// ── Channel Sidebar Item ─────────────────────────────────────────
+function ChannelItem({ channel, isActive, onClick }) {
+  return (
+    <button
+      className={`${styles.channelItem} ${isActive ? styles.channelItemActive : ""}`}
+      onClick={() => onClick(channel)}
+      title={channel.topic || channel.name}
+    >
+      <span className={styles.channelHash}>#</span>
+      <span className={styles.channelItemName}>{channel.name}</span>
+    </button>
+  );
+}
+
+// ── Members Sidebar ──────────────────────────────────────────────
+function MemberItem({ member }) {
+  return (
+    <div className={styles.memberItem}>
+      <div className={styles.memberAvatarWrap}>
+        {member.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={member.avatarUrl} alt="" className={styles.memberAvatar} loading="lazy" />
+        ) : (
+          <div className={styles.memberAvatarFallback} style={{ background: getAvatarColor(member.id) }}>
+            {(member.displayName || "?")[0].toUpperCase()}
+          </div>
+        )}
+        <StatusDot status={member.status} />
+      </div>
+      <div className={styles.memberInfo}>
+        <span className={styles.memberName} style={{ color: member.roleColor || "#dbdee1" }}>
+          {member.displayName}
+        </span>
+        {member.activity && (
+          <span className={styles.memberActivity}>{member.activity}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Whitelisted channel IDs (only these are shown in the sidebar) ─
+const CHANNEL_IDS = ["671089694397956116", "676318241689436170"];
+
 // ═════════════════════════════════════════════════════════════════
 //  DiscordChat Component
 // ═════════════════════════════════════════════════════════════════
 
 export default function DiscordChatComponent({ messageCount = 500, joinMode = false, inviteUrl = "https://discord.gg/sBX7BxP", onJoinHoverChange }) {
+  const [channels, setChannels] = useState([]);
+  const [serverName, setServerName] = useState("");
+  const [activeChannelId, setActiveChannelId] = useState(CHANNEL_IDS[0]);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [members, setMembers] = useState(null);
   const scrollRef = useRef(null);
   const isFirstLoad = useRef(true);
+
+  // Derive active channel object from fetched data
+  const activeChannel = channels.find((ch) => ch.id === activeChannelId) || { id: activeChannelId, name: "chat" };
+
+  // ── Fetch channel list + server name from API ───────────────────
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/discord/channels")
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => {
+        if (cancelled) return;
+        if (data.guildName) setServerName(data.guildName);
+        // Filter to only the whitelisted channels, preserve order
+        const filtered = CHANNEL_IDS
+          .map((id) => data.channels?.find((ch) => ch.id === id))
+          .filter(Boolean);
+        setChannels(filtered.length > 0 ? filtered : CHANNEL_IDS.map((id) => ({ id, name: id })));
+      })
+      .catch(() => {
+        // Fallback — use IDs as names
+        if (!cancelled) setChannels(CHANNEL_IDS.map((id) => ({ id, name: id })));
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   // ── Scroll to bottom ────────────────────────────────────────────
   const scrollToBottom = useCallback((instant = false) => {
     const el = scrollRef.current;
     if (!el) return;
-    // Use instant scroll on first load, smooth on subsequent updates
     el.scrollTo({ top: el.scrollHeight, behavior: instant ? "instant" : "smooth" });
   }, []);
 
+  // ── SSE stream for messages ─────────────────────────────────────
   useEffect(() => {
     let es;
     let retryTimeout;
 
     function connect() {
-      es = new EventSource(`/api/discord/stream?limit=${messageCount}`);
+      es = new EventSource(`/api/discord/stream?limit=${messageCount}&channelId=${activeChannelId}`);
 
-      // ── Initial batch ───────────────────────────────────────────
       es.addEventListener("init", (e) => {
         try {
           const { messages: msgs } = JSON.parse(e.data);
-          // Messages arrive newest-first from the API — reverse to chronological
-          setMessages((msgs || []).reverse());
+          const reversed = (msgs || []).reverse();
+          setMessages(reversed);
           setError(null);
           setLoading(false);
-          // Scroll to bottom after initial render — use requestAnimationFrame
-          // to ensure the DOM has painted the messages first
+
+          // ── Backfill server name & channel names from message data ──
+          // The SSE stream messages include guildName and channelName
+          // from DiscordDataService, so we can use them as a fallback
+          // when the Lupos /guild/channels endpoint is unavailable.
+          if (reversed.length > 0) {
+            const firstMsg = reversed[0];
+            if (firstMsg.guildName) {
+              setServerName((prev) => prev || firstMsg.guildName);
+            }
+            // Build channel name map from all messages in the batch
+            setChannels((prev) => {
+              // If we already have real names (not just IDs), keep them
+              const hasRealNames = prev.some((ch) => ch.name !== ch.id);
+              if (hasRealNames) return prev;
+
+              const channelMap = new Map();
+              for (const msg of reversed) {
+                if (msg.channelId && msg.channelName) {
+                  channelMap.set(msg.channelId, msg.channelName);
+                }
+              }
+              if (channelMap.size === 0) return prev;
+
+              // Merge discovered names into existing channel list
+              return prev.map((ch) => ({
+                ...ch,
+                name: channelMap.get(ch.id) || ch.name,
+              }));
+            });
+          }
+
           requestAnimationFrame(() => {
             scrollToBottom(true);
             isFirstLoad.current = false;
@@ -368,33 +358,24 @@ export default function DiscordChatComponent({ messageCount = 500, joinMode = fa
         }
       });
 
-      // ── New messages (delta) ────────────────────────────────────
       es.addEventListener("new", (e) => {
         try {
           const { messages: newMsgs } = JSON.parse(e.data);
           if (!newMsgs?.length) return;
-
           setMessages((prev) => {
-            // New messages arrive newest-first — reverse to chronological
             const appended = [...prev, ...newMsgs.reverse()];
-            // Cap the buffer so the DOM doesn't grow unbounded
-            return appended.length > messageCount
-              ? appended.slice(appended.length - messageCount)
-              : appended;
+            return appended.length > messageCount ? appended.slice(appended.length - messageCount) : appended;
           });
-          // Auto-scroll to bottom for new messages
           requestAnimationFrame(() => scrollToBottom(false));
         } catch (err) {
           console.error("[DiscordChat] New message parse error:", err);
         }
       });
 
-      // ── Deleted messages ────────────────────────────────────────
       es.addEventListener("delete", (e) => {
         try {
           const { ids } = JSON.parse(e.data);
           if (!ids?.length) return;
-
           const deletedSet = new Set(ids);
           setMessages((prev) => prev.filter((msg) => !deletedSet.has(msg.id)));
         } catch (err) {
@@ -402,30 +383,47 @@ export default function DiscordChatComponent({ messageCount = 500, joinMode = fa
         }
       });
 
-      // ── Error handling with auto-reconnect ──────────────────────
-      // EventSource auto-reconnects on network errors. We only need
-      // to handle the case where the connection is permanently lost.
-      es.addEventListener("error", (_e) => {
+      es.addEventListener("error", () => {
         if (es.readyState === EventSource.CLOSED) {
-          console.warn("[DiscordChat] SSE connection closed, retrying in 3s…");
+          console.warn("[DiscordChat] SSE closed, retrying in 3s…");
           es.close();
           retryTimeout = setTimeout(connect, 3_000);
         }
       });
-
-      // ── Server-side error event ─────────────────────────────────
-      es.addEventListener("error", () => {
-        // Keep existing messages visible, just mark the error state
-      });
     }
 
     connect();
-
     return () => {
       if (es) es.close();
       if (retryTimeout) clearTimeout(retryTimeout);
     };
-  }, [messageCount, scrollToBottom]);
+  }, [messageCount, scrollToBottom, activeChannelId]);
+
+  // ── Fetch members (poll every 30s) ──────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchMembers() {
+      try {
+        const res = await fetch("/api/discord/members");
+        if (res.ok && !cancelled) {
+          setMembers(await res.json());
+        }
+      } catch {
+        // silently ignore — sidebar is non-critical
+      }
+    }
+    fetchMembers();
+    const interval = setInterval(fetchMembers, 30_000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
+  // ── Channel switch — reset message state eagerly ────────────────
+  const handleChannelClick = useCallback((channel) => {
+    setActiveChannelId(channel.id);
+    setMessages([]);
+    setLoading(true);
+    isFirstLoad.current = true;
+  }, []);
 
   return (
     <div className={styles.container} id="discord-chat">
@@ -436,148 +434,173 @@ export default function DiscordChatComponent({ messageCount = 500, joinMode = fa
           <span className={styles.trafficDot} />
           <span className={styles.trafficDot} />
         </div>
-        <span className={styles.channelIcon}>#</span>
-        <span className={styles.channelName}>general-chat</span>
-        <span className={styles.onlineDot} />
-        <span className={styles.channelTopic}>
-          general discussion, arguments and shouting matches
+        <span className={styles.titleBarCenter}>
+          <span className={styles.channelName}>{serverName || "Discord"}</span>
         </span>
+        <span className={styles.onlineDot} />
+        {members && (
+          <span className={styles.channelTopic}>
+            {members.totalOnline} online · {members.totalMembers} members
+          </span>
+        )}
       </div>
 
-      {/* ── Messages ──────────────────────────────────────────── */}
-      <div className={styles.messagesArea} ref={scrollRef}>
-        {loading && (
-          <div className={styles.loading}>
-            <div className={styles.loadingDots}>
-              <span className={styles.loadingDot} />
-              <span className={styles.loadingDot} />
-              <span className={styles.loadingDot} />
+      {/* ── Three-Panel Layout ─────────────────────────────────── */}
+      <div className={styles.panelLayout}>
+        {/* ── Left Sidebar: Channels ──────────────────────────── */}
+        <aside className={styles.channelSidebar}>
+          <div className={styles.serverHeader}>
+            <span className={styles.serverName}>{serverName || "Discord"}</span>
+          </div>
+          <div className={styles.channelList}>
+            <div className={styles.channelCategory}>
+              <span className={styles.categoryName}>Text Channels</span>
             </div>
-            <span>Loading messages…</span>
+            {channels.map((ch) => (
+              <ChannelItem
+                key={ch.id}
+                channel={ch}
+                isActive={activeChannelId === ch.id}
+                onClick={handleChannelClick}
+              />
+            ))}
           </div>
-        )}
+        </aside>
 
-        {error && (
-          <div className={styles.error}>
-            <span className={styles.errorIcon}>⚠️</span>
-            <span>Couldn&apos;t load messages</span>
-          </div>
-        )}
-
-        {!loading &&
-          !error &&
-          messages.map((msg, i) => {
-            const prev = i > 0 ? messages[i - 1] : null;
-            const grouped = shouldGroup(msg, prev);
-            const newDay = isDifferentDay(msg, prev);
-            // Use role color from API if available, otherwise deterministic fallback
-            const nameColor = msg.author.roleColor || getFallbackColor(msg.author.id);
-
-            return (
-              <div key={msg.id}>
-                {newDay && (
-                  <div className={styles.dateSeparator}>
-                    <span className={styles.dateSeparatorText}>
-                      {formatDateSeparator(msg.createdAtISO)}
-                    </span>
-                  </div>
-                )}
-
-                {grouped && !newDay ? (
-                  <div className={styles.messageRowGrouped}>
-                    <span className={styles.timestampInline}>
-                      {formatShortTime(msg.createdAtISO)}
-                    </span>
-                    <div className={styles.messageContent}>
-                      <p className={styles.messageText}>
-                        {formatContent(msg.content, msg.cleanContent)}
-                      </p>
-                      <TenorEmbeds content={msg.content} />
-                      <ImageAttachments attachments={msg.attachments} />
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.messageRow}>
-                    {msg.author.avatarUrl ? (
-                      <Image
-                        className={styles.avatar}
-                        src={msg.author.avatarUrl}
-                        alt={msg.author.displayName}
-                        width={40}
-                        height={40}
-                        unoptimized
-                      />
-                    ) : (
-                      <div
-                        className={styles.avatarFallback}
-                        style={{ background: getAvatarColor(msg.author.id) }}
-                      >
-                        {(msg.author.displayName || "?")[0].toUpperCase()}
-                      </div>
-                    )}
-
-                    <div className={styles.messageContent}>
-                      <div className={styles.messageHeader}>
-                        <span
-                          className={styles.authorName}
-                          style={{ color: nameColor }}
-                        >
-                          {msg.author.displayName}
-                        </span>
-                        {msg.author.isBot && (
-                          <span className={styles.botBadge}>
-                            <svg className={styles.botBadgeIcon} viewBox="0 0 16 16" fill="currentColor">
-                              <path d="M7.4,11.17,4,8.62,5,7.26l2,1.53L10.64,4l1.36,1Z" />
-                            </svg>
-                            BOT
-                          </span>
-                        )}
-                        <span className={styles.timestamp}>
-                          {formatTimestamp(msg.createdAtISO)}
-                        </span>
-                      </div>
-                      <p className={styles.messageText}>
-                        {formatContent(msg.content, msg.cleanContent)}
-                      </p>
-                      <TenorEmbeds content={msg.content} />
-                      <ImageAttachments attachments={msg.attachments} />
-                    </div>
-                  </div>
-                )}
+        {/* ── Center: Messages ────────────────────────────────── */}
+        <div className={styles.chatPanel}>
+          <div className={styles.messagesArea} ref={scrollRef}>
+            {loading && (
+              <div className={styles.loading}>
+                <div className={styles.loadingDots}>
+                  <span className={styles.loadingDot} />
+                  <span className={styles.loadingDot} />
+                  <span className={styles.loadingDot} />
+                </div>
+                <span>Loading messages…</span>
               </div>
-            );
-          })}
-      </div>
-
-      {/* ── Input Bar / Join CTA ────────────────────────────── */}
-      <div className={styles.inputBar}>
-        {joinMode ? (
-          <a
-            href={inviteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.joinButton}
-            id="discord-join-button"
-            onMouseEnter={() => onJoinHoverChange?.(true)}
-            onMouseLeave={() => onJoinHoverChange?.(false)}
-          >
-            <svg className={styles.joinButtonIcon} viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-              <path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.36-.76-.54-1.09c-.01-.02-.04-.03-.07-.03c-1.5.26-2.93.71-4.27 1.33c-.01 0-.02.01-.03.02c-2.72 4.07-3.47 8.03-3.1 11.95c0 .02.01.04.03.05c1.8 1.32 3.53 2.12 5.24 2.65c.03.01.06 0 .07-.02c.4-.55.76-1.13 1.07-1.74c.02-.04 0-.08-.04-.09c-.57-.22-1.11-.48-1.64-.78c-.04-.02-.04-.08-.01-.11c.11-.08.22-.17.33-.25c.02-.02.05-.02.07-.01c3.44 1.57 7.15 1.57 10.55 0c.02-.01.05-.01.07.01c.11.09.22.17.33.26c.04.03.04.09-.01.11c-.52.31-1.07.56-1.64.78c-.04.01-.05.06-.04.09c.32.61.68 1.19 1.07 1.74c.03.01.06.02.09.01c1.72-.53 3.45-1.33 5.24-2.65c.02-.01.03-.03.03-.05c.44-4.53-.73-8.46-3.1-11.95c-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.83 2.12-1.89 2.12z" />
-            </svg>
-            Join the Discord Server
-          </a>
-        ) : (
-          <div className={styles.inputContainer}>
-            <span className={styles.inputPlaceholder}>
-              Message #general-chat
-            </span>
-            <div className={styles.inputIcons}>
-              <span>😀</span>
-              <span>🎁</span>
-              <span>📎</span>
-            </div>
+            )}
+            {error && (
+              <div className={styles.error}>
+                <span className={styles.errorIcon}>⚠️</span>
+                <span>Couldn&apos;t load messages</span>
+              </div>
+            )}
+            {!loading && !error && messages.map((msg, i) => {
+              const prev = i > 0 ? messages[i - 1] : null;
+              const grouped = shouldGroup(msg, prev);
+              const newDay = isDifferentDay(msg, prev);
+              const nameColor = msg.author.roleColor || getFallbackColor(msg.author.id);
+              return (
+                <div key={msg.id}>
+                  {newDay && (
+                    <div className={styles.dateSeparator}>
+                      <span className={styles.dateSeparatorText}>{formatDateSeparator(msg.createdAtISO)}</span>
+                    </div>
+                  )}
+                  {grouped && !newDay ? (
+                    <div className={styles.messageRowGrouped}>
+                      <span className={styles.timestampInline}>{formatShortTime(msg.createdAtISO)}</span>
+                      <div className={styles.messageContent}>
+                        <p className={styles.messageText}>{formatContent(msg.content, msg.cleanContent)}</p>
+                        <TenorEmbeds content={msg.content} />
+                        <ImageAttachments attachments={msg.attachments} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={styles.messageRow}>
+                      {msg.author.avatarUrl ? (
+                        <Image className={styles.avatar} src={msg.author.avatarUrl}
+                          alt={msg.author.displayName} width={40} height={40} unoptimized />
+                      ) : (
+                        <div className={styles.avatarFallback} style={{ background: getAvatarColor(msg.author.id) }}>
+                          {(msg.author.displayName || "?")[0].toUpperCase()}
+                        </div>
+                      )}
+                      <div className={styles.messageContent}>
+                        <div className={styles.messageHeader}>
+                          <span className={styles.authorName} style={{ color: nameColor }}>
+                            {msg.author.displayName}
+                          </span>
+                          {msg.author.isBot && (
+                            <span className={styles.botBadge}>
+                              <svg className={styles.botBadgeIcon} viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M7.4,11.17,4,8.62,5,7.26l2,1.53L10.64,4l1.36,1Z" />
+                              </svg>
+                              BOT
+                            </span>
+                          )}
+                          <span className={styles.timestamp}>{formatTimestamp(msg.createdAtISO)}</span>
+                        </div>
+                        <p className={styles.messageText}>{formatContent(msg.content, msg.cleanContent)}</p>
+                        <TenorEmbeds content={msg.content} />
+                        <ImageAttachments attachments={msg.attachments} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        )}
+
+          {/* ── Input Bar / Join CTA ──────────────────────────── */}
+          <div className={styles.inputBar}>
+            {joinMode ? (
+              <a href={inviteUrl} target="_blank" rel="noopener noreferrer"
+                className={styles.joinButton} id="discord-join-button"
+                onMouseEnter={() => onJoinHoverChange?.(true)}
+                onMouseLeave={() => onJoinHoverChange?.(false)}>
+                <svg className={styles.joinButtonIcon} viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.36-.76-.54-1.09c-.01-.02-.04-.03-.07-.03c-1.5.26-2.93.71-4.27 1.33c-.01 0-.02.01-.03.02c-2.72 4.07-3.47 8.03-3.1 11.95c0 .02.01.04.03.05c1.8 1.32 3.53 2.12 5.24 2.65c.03.01.06 0 .07-.02c.4-.55.76-1.13 1.07-1.74c.02-.04 0-.08-.04-.09c-.57-.22-1.11-.48-1.64-.78c-.04-.02-.04-.08-.01-.11c.11-.08.22-.17.33-.25c.02-.02.05-.02.07-.01c3.44 1.57 7.15 1.57 10.55 0c.02-.01.05-.01.07.01c.11.09.22.17.33.26c.04.03.04.09-.01.11c-.52.31-1.07.56-1.64.78c-.04.01-.05.06-.04.09c.32.61.68 1.19 1.07 1.74c.03.01.06.02.09.01c1.72-.53 3.45-1.33 5.24-2.65c.02-.01.03-.03.03-.05c.44-4.53-.73-8.46-3.1-11.95c-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.83 2.12-1.89 2.12z" />
+                </svg>
+                Join the Discord Server
+              </a>
+            ) : (
+              <div className={styles.inputContainer}>
+                <span className={styles.inputPlaceholder}>Message #{activeChannel.name}</span>
+                <div className={styles.inputIcons}>
+                  <span>😀</span><span>🎁</span><span>📎</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Right Sidebar: Members ──────────────────────────── */}
+        <aside className={styles.memberSidebar}>
+          {members ? (
+            <div className={styles.memberList}>
+              {members.roles?.map((role) => (
+                <div key={role.id} className={styles.memberRoleGroup}>
+                  <div className={styles.memberRoleHeader}>
+                    {role.name} — {role.members.length}
+                  </div>
+                  {role.members.map((m) => (
+                    <MemberItem key={m.id} member={m} />
+                  ))}
+                </div>
+              ))}
+              {members.bots?.length > 0 && (
+                <div className={styles.memberRoleGroup}>
+                  <div className={styles.memberRoleHeader}>
+                    Bots — {members.bots.length}
+                  </div>
+                  {members.bots.map((m) => (
+                    <MemberItem key={m.id} member={m} />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className={styles.loading}>
+              <div className={styles.loadingDots}>
+                <span className={styles.loadingDot} />
+                <span className={styles.loadingDot} />
+                <span className={styles.loadingDot} />
+              </div>
+            </div>
+          )}
+        </aside>
       </div>
     </div>
   );
