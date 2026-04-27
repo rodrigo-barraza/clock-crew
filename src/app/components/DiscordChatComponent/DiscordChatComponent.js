@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import styles from "./DiscordChatComponent.module.css";
 
@@ -270,6 +270,7 @@ export default function DiscordChatComponent({ messageCount = 500, joinMode = fa
   const [members, setMembers] = useState(null);
   const scrollRef = useRef(null);
   const isFirstLoad = useRef(true);
+  const shouldSnapToBottom = useRef(false);
 
   // Derive active channel object from fetched data
   const activeChannel = channels.find((ch) => ch.id === activeChannelId) || { id: activeChannelId, name: "chat" };
@@ -302,6 +303,23 @@ export default function DiscordChatComponent({ messageCount = 500, joinMode = fa
     el.scrollTo({ top: el.scrollHeight, behavior: instant ? "instant" : "smooth" });
   }, []);
 
+  // ── Snap to bottom after React commits DOM (useLayoutEffect) ───
+  // Fires synchronously after DOM mutation, guaranteeing scrollHeight
+  // is accurate — unlike requestAnimationFrame which races React.
+  // A delayed fallback re-scrolls after images finish loading and
+  // shift scrollHeight beyond the initial measurement.
+  useLayoutEffect(() => {
+    if (shouldSnapToBottom.current && messages.length > 0) {
+      const instant = isFirstLoad.current;
+      scrollToBottom(instant);
+      shouldSnapToBottom.current = false;
+      isFirstLoad.current = false;
+      // Catch late layout shifts from lazy-loaded images
+      const t = setTimeout(() => scrollToBottom(true), 200);
+      return () => clearTimeout(t);
+    }
+  }, [messages, scrollToBottom]);
+
   // ── SSE stream for messages ─────────────────────────────────────
   useEffect(() => {
     let es;
@@ -314,6 +332,7 @@ export default function DiscordChatComponent({ messageCount = 500, joinMode = fa
         try {
           const { messages: msgs } = JSON.parse(e.data);
           const reversed = (msgs || []).reverse();
+          shouldSnapToBottom.current = true;
           setMessages(reversed);
           setError(null);
           setLoading(false);
@@ -348,11 +367,6 @@ export default function DiscordChatComponent({ messageCount = 500, joinMode = fa
               }));
             });
           }
-
-          requestAnimationFrame(() => {
-            scrollToBottom(true);
-            isFirstLoad.current = false;
-          });
         } catch (err) {
           console.error("[DiscordChat] Init parse error:", err);
         }
@@ -362,11 +376,11 @@ export default function DiscordChatComponent({ messageCount = 500, joinMode = fa
         try {
           const { messages: newMsgs } = JSON.parse(e.data);
           if (!newMsgs?.length) return;
+          shouldSnapToBottom.current = true;
           setMessages((prev) => {
             const appended = [...prev, ...newMsgs.reverse()];
             return appended.length > messageCount ? appended.slice(appended.length - messageCount) : appended;
           });
-          requestAnimationFrame(() => scrollToBottom(false));
         } catch (err) {
           console.error("[DiscordChat] New message parse error:", err);
         }
