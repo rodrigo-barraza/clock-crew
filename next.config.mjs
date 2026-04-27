@@ -40,8 +40,27 @@ const nextConfig = {
   allowedDevOrigins: ["clock-crew.com"],
   turbopack: {},
 
+  // Discord avatar and attachment images
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.discordapp.com",
+      },
+      {
+        protocol: "https",
+        hostname: "media.discordapp.net",
+      },
+    ],
+  },
+
   env: {
-    CLOCK_CREW_PORT: secrets.CLOCK_CREW_PORT || "3000",
+    CLOCK_CREW_PORT: secrets.CLOCK_CREW_PORT || "3001",
+  },
+
+  // Server-only env — NOT exposed to the browser
+  serverRuntimeConfig: {
+    TOOLS_API_URL: secrets.TOOLS_API_URL || "http://192.168.86.2:5590",
   },
 };
 

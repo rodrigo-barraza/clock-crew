@@ -134,11 +134,78 @@ a:hover {
   justify-content: center;
   min-height: 100dvh;
   width: 100%;
+  padding: 48px 24px;
+  position: relative;
+  overflow: hidden;
+  background: #0d0d12;
+}
+
+/* ── Sunburst rays (conic-gradient) ───────────────────────────── */
+.hero::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200vmax;
+  height: 200vmax;
+  transform-origin: center center;
+  /* 16 alternating rays — light red / light green */
+  background: conic-gradient(
+    from 0deg,
+    #e05555 0deg,    #e05555 22.5deg,
+    #4caf50 22.5deg, #4caf50 45deg,
+    #e05555 45deg,   #e05555 67.5deg,
+    #4caf50 67.5deg, #4caf50 90deg,
+    #e05555 90deg,   #e05555 112.5deg,
+    #4caf50 112.5deg,#4caf50 135deg,
+    #e05555 135deg,  #e05555 157.5deg,
+    #4caf50 157.5deg,#4caf50 180deg,
+    #e05555 180deg,  #e05555 202.5deg,
+    #4caf50 202.5deg,#4caf50 225deg,
+    #e05555 225deg,  #e05555 247.5deg,
+    #4caf50 247.5deg,#4caf50 270deg,
+    #e05555 270deg,  #e05555 292.5deg,
+    #4caf50 292.5deg,#4caf50 315deg,
+    #e05555 315deg,  #e05555 337.5deg,
+    #4caf50 337.5deg,#4caf50 360deg
+  );
+  margin-top: -100vmax;
+  margin-left: -100vmax;
+  animation: sunburstSpin 60s linear infinite;
+  will-change: transform;
+  opacity: 0.4;
+  z-index: 0;
+}
+
+/* ── Center/edge vignette ─────────────────────────────────────── */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    rgba(10, 10, 15, 0.4) 50%,
+    rgba(10, 10, 15, 0.85) 100%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+@keyframes sunburstSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .hero-content {
   text-align: center;
   animation: fadeIn 600ms ease-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  position: relative;
+  z-index: 2;
 }
 
 .hero-title {
