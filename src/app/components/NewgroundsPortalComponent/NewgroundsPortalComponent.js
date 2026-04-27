@@ -70,14 +70,13 @@ function ContentDetailModal({ item, onClose }) {
         <button className={styles.modalClose} onClick={onClose} title="Close">✕</button>
 
         {/* ══ CONTENT HERO — the clicked movie/game ══════════ */}
-        <div className={styles.contentHero}>
-          {item?.thumbnailUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.thumbnailUrl} alt={item.title} className={styles.contentHeroThumb} />
-          )}
-          <div className={styles.contentHeroInfo}>
-            <span className={`${styles.typeBadge} ${isGame ? styles.typeBadgeGame : styles.typeBadgeMovie}`}
-              style={{ position: "static" }}>
+        <div
+          className={styles.contentHero}
+          style={item?.thumbnailUrl ? { backgroundImage: `url(${item.thumbnailUrl})` } : undefined}
+        >
+          <div className={styles.contentHeroOverlay} />
+          <div className={styles.contentHeroBody}>
+            <span className={`${styles.heroBadge} ${isGame ? styles.typeBadgeGame : styles.typeBadgeMovie}`}>
               {isGame ? "🎮 Game" : "🎬 Movie"}
             </span>
             <h2 className={styles.contentHeroTitle}>{item?.title}</h2>
@@ -96,8 +95,7 @@ function ContentDetailModal({ item, onClose }) {
               href={item?.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`${styles.actionButton} ${styles.actionPrimary}`}
-              style={{ marginTop: 12, alignSelf: "flex-start" }}
+              className={`${styles.actionButton} ${styles.actionHero}`}
             >
               {isGame ? "🎮 Play on Newgrounds" : "▶ Watch on Newgrounds"}
             </a>
@@ -208,44 +206,102 @@ function ContentDetailModal({ item, onClose }) {
 //  NewgroundsPortalComponent
 // ═════════════════════════════════════════════════════════════════
 
+const PAGE_SIZE = 40;
+
 export default function NewgroundsPortalComponent() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [query, setQuery] = useState("");
   const [type, setType] = useState("all");
   const [totalMovies, setTotalMovies] = useState(0);
   const [totalGames, setTotalGames] = useState(0);
   const [selectedItem, setSelectedItem] = useState(null);
   const debounceRef = useRef(null);
+  const sentinelRef = useRef(null);
+  const skipRef = useRef(0);
+  const fetchingRef = useRef(false);
 
   // ── Fetch portal data ──────────────────────────────────────────
-  const fetchPortal = useCallback(async (q = "", t = "all") => {
-    setLoading(true);
+  // append=false → initial/reset load; append=true → infinite scroll page
+  const fetchPortal = useCallback(async (q = "", t = "all", append = false) => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
+
+    const skip = append ? skipRef.current : 0;
+    if (!append) {
+      setLoading(true);
+      setHasMore(true);
+      skipRef.current = 0;
+    } else {
+      setLoadingMore(true);
+    }
+
     try {
-      const params = new URLSearchParams({ type: t, sort: "score", limit: "80" });
+      const params = new URLSearchParams({
+        type: t,
+        sort: "score",
+        limit: String(PAGE_SIZE),
+        skip: String(skip),
+      });
       if (q) {
         params.set("q", q);
-        // Also set username for exact-match fallback
         params.set("username", q);
       }
       const res = await fetch(`/api/newgrounds/portal?${params}`);
       if (res.ok) {
         const data = await res.json();
-        setItems(data.items || []);
-        setTotalMovies(data.totalMovies || 0);
-        setTotalGames(data.totalGames || 0);
+        const newItems = data.items || [];
+
+        if (append) {
+          setItems((prev) => [...prev, ...newItems]);
+        } else {
+          setItems(newItems);
+          setTotalMovies(data.totalMovies || 0);
+          setTotalGames(data.totalGames || 0);
+        }
+
+        skipRef.current = skip + newItems.length;
+
+        // Determine if more pages exist
+        const totalFiltered = (data.totalMovies || 0) + (data.totalGames || 0);
+        if (newItems.length < PAGE_SIZE || skipRef.current >= totalFiltered) {
+          setHasMore(false);
+        }
       }
     } catch (err) {
       console.error("[NewgroundsPortal] Fetch error:", err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+      fetchingRef.current = false;
     }
   }, []);
 
   // ── Initial load ───────────────────────────────────────────────
   useEffect(() => {
-    fetchPortal("", "all");
+    fetchPortal("", "all", false);
   }, [fetchPortal]);
+
+  // ── IntersectionObserver for infinite scroll ───────────────────
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && hasMore && !loading && !loadingMore) {
+          fetchPortal(query, type, true);
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, query, type, fetchPortal]);
 
   // ── Debounced search ───────────────────────────────────────────
   const handleSearchChange = useCallback((e) => {
@@ -253,14 +309,14 @@ export default function NewgroundsPortalComponent() {
     setQuery(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      fetchPortal(val, type);
+      fetchPortal(val, type, false);
     }, 350);
   }, [fetchPortal, type]);
 
   // ── Type tab switch ────────────────────────────────────────────
   const handleTypeChange = useCallback((newType) => {
     setType(newType);
-    fetchPortal(query, newType);
+    fetchPortal(query, newType, false);
   }, [fetchPortal, query]);
 
   // ── Card click → content detail modal ──────────────────────────
@@ -342,7 +398,7 @@ export default function NewgroundsPortalComponent() {
               </div>
             )}
 
-            {!loading && items.map((item, i) => (
+            {items.map((item, i) => (
               <div
                 key={item.contentId || item._id}
                 className={styles.itemCard}
@@ -374,6 +430,25 @@ export default function NewgroundsPortalComponent() {
                 </div>
               </div>
             ))}
+
+            {/* ── Infinite scroll sentinel ─────────────────────── */}
+            <div ref={sentinelRef} className={styles.sentinel} />
+
+            {loadingMore && (
+              <div className={styles.loadingMore}>
+                <div className={styles.loadingDots}>
+                  <span className={styles.loadingDot} />
+                  <span className={styles.loadingDot} />
+                  <span className={styles.loadingDot} />
+                </div>
+              </div>
+            )}
+
+            {!loading && !hasMore && items.length > 0 && (
+              <div className={styles.endOfList}>
+                All {items.length.toLocaleString()} submissions loaded
+              </div>
+            )}
           </div>
         </div>
       </div>
