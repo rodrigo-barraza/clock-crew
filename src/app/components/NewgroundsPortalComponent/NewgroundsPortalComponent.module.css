@@ -146,11 +146,22 @@
   pointer-events: none;
 }
 
+/* ── Filter Row (tabs + year) ──────────────────────────────────── */
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 /* ── Type Tabs ─────────────────────────────────────────────────── */
 
 .typeTabs {
   display: flex;
   gap: 4px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .typeTab {
@@ -176,6 +187,49 @@
 .typeTabActive {
   background: rgba(88, 101, 242, 0.2);
   color: #8a99fc;
+}
+
+/* ── Year Filter ───────────────────────────────────────────────── */
+
+.yearFilter {
+  flex-shrink: 0;
+}
+
+.yearSelect {
+  padding: 4px 28px 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  background: #383a40;
+  color: #dbdee1;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2380848e' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 10px 6px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.yearSelect:hover {
+  background-color: #404249;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.yearSelect:focus {
+  box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.4);
+  border-color: rgba(88, 101, 242, 0.5);
+}
+
+.yearSelect option {
+  background: #2b2d31;
+  color: #dbdee1;
 }
 
 /* ── Item Grid (scrollable) ────────────────────────────────────── */
@@ -277,6 +331,13 @@
   background: rgba(67, 160, 71, 0.75);
   color: #fff;
 }
+
+.typeBadgeAudio {
+  background: rgba(156, 39, 176, 0.75);
+  color: #fff;
+}
+
+
 
 .itemInfo {
   padding: 8px 10px 10px;
@@ -815,6 +876,69 @@
   font-weight: 600;
 }
 
+/* ── CC Forum Quote ────────────────────────────────────────────── */
+
+.ccForumQuote {
+  margin: 10px 0 0;
+  padding: 10px 14px;
+  border-left: 3px solid rgba(88, 101, 242, 0.6);
+  background: rgba(88, 101, 242, 0.06);
+  border-radius: 0 6px 6px 0;
+  animation: quoteReveal 400ms ease both;
+  animation-delay: 200ms;
+}
+
+@keyframes quoteReveal {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.ccQuoteBody {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #b5bac1;
+  font-style: italic;
+  margin: 0;
+  word-break: break-word;
+}
+
+.ccQuoteFooter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.ccQuoteThread {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #7a7e8a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 250px;
+}
+
+.ccQuoteThreadIcon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.ccQuoteDate {
+  font-size: 11px;
+  color: #6d6f78;
+  margin-left: auto;
+}
+
 /* ── Top Submissions ───────────────────────────────────────────── */
 
 .topSubmissions {
@@ -1029,6 +1153,78 @@
   flex-shrink: 0;
 }
 
+/* ── Clock Profile Card ───────────────────────────────────────── */
+
+.clockAvatarWrap {
+  position: relative;
+  width: 100%;
+  height: 135px;
+  background: #1e1f22;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clockAvatarImg {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  transition: transform 300ms ease, border-color 300ms ease;
+}
+
+.itemCard:hover .clockAvatarImg {
+  transform: scale(1.1);
+  border-color: rgba(255, 152, 0, 0.5);
+}
+
+.clockAvatarFallbackInitial {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #5865f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  transition: transform 300ms ease, border-color 300ms ease;
+}
+
+.itemCard:hover .clockAvatarFallbackInitial {
+  transform: scale(1.1);
+  border-color: rgba(255, 152, 0, 0.5);
+}
+
+.clockLevelBadge {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(76, 175, 80, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.clockFanCount {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #f48fb1;
+  flex-shrink: 0;
+}
+
 /* ── Score Bar (for modal stat) ─────────────────────────────────── */
 
 .scoreBar {
@@ -1045,6 +1241,97 @@
   border-radius: 2px;
   background: linear-gradient(90deg, #f5c518, #ff6600);
   transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Profile Detail Modal (Clocks tab) ─────────────────────────── */
+
+.profileBanner {
+  position: relative;
+  width: 100%;
+  height: 100px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.profileBannerGradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #ff6600 0%, #e91e63 40%, #5865f2 100%);
+  background-size: 200% 200%;
+  animation: bannerShift 8s ease-in-out infinite;
+}
+
+.profileIdentity {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  padding: 0 20px 12px;
+  margin-top: -36px;
+  position: relative;
+  z-index: 1;
+}
+
+.profileAvatarWrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 5px solid #2b2d31;
+  background: #2b2d31;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.profileNameBlock {
+  padding-bottom: 4px;
+  min-width: 0;
+}
+
+.profileDisplayName {
+  font-size: 22px;
+  font-weight: 700;
+  color: #f2f3f5;
+  display: block;
+  line-height: 1.2;
+}
+
+/* ── Profile Links ─────────────────────────────────────────────── */
+
+.profileLinks {
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.profileLinksList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.profileLinkItem {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(88, 101, 242, 0.1);
+  color: #8a99fc;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.profileLinkItem:hover {
+  background: rgba(88, 101, 242, 0.2);
+  color: #a5b4fc;
+}
+
+/* ── Top Submission anchors reset ──────────────────────────────── */
+
+a.topSubItem {
+  text-decoration: none;
+  color: inherit;
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */
