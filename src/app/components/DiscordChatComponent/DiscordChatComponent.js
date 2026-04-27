@@ -327,7 +327,7 @@ function ImageAttachments({ attachments }) {
 //  DiscordChat Component
 // ═════════════════════════════════════════════════════════════════
 
-export default function DiscordChatComponent({ messageCount = 500, joinMode = false, inviteUrl = "https://discord.gg/clockcrew" }) {
+export default function DiscordChatComponent({ messageCount = 500, joinMode = false, inviteUrl = "https://discord.gg/sBX7BxP" }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

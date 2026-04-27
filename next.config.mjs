@@ -21,7 +21,7 @@ Object.assign(process.env, secrets);
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-  allowedDevOrigins: ["clock-crew.com"],
+  allowedDevOrigins: ["clocktopia.com"],
   turbopack: {},
 
   // Discord avatar and attachment images
@@ -45,6 +45,18 @@ const nextConfig = {
   // Server-only env — NOT exposed to the browser
   serverRuntimeConfig: {
     TOOLS_API_URL: secrets.TOOLS_API_URL || "http://192.168.86.2:5590",
+  },
+
+  // 301 redirect www → bare domain (canonical URL)
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.clocktopia.com" }],
+        destination: "https://clocktopia.com/:path*",
+        permanent: true,
+      },
+    ];
   },
 };
 
