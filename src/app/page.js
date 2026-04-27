@@ -73,7 +73,15 @@ export default function Home() {
   return (
     <main className="hero" ref={heroRef}>
       <div className="hero-content">
-        <h1 className="hero-title">The Clock Crew</h1>
+        <div className="hero-title-row">
+          <img
+            src="/animated-clock.gif"
+            alt="Animated clock"
+            className="hero-clock-gif"
+            aria-hidden="true"
+          />
+          <h1 className="hero-title">The Clock Crew</h1>
+        </div>
         <p className="hero-subtitle">
           The legendary Newgrounds Flash animation collective — est. 2002
         </p>

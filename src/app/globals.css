@@ -224,6 +224,20 @@ a:hover {
   z-index: 2;
 }
 
+.hero-title-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hero-clock-gif {
+  height: 1em;
+  width: auto;
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
 .hero-title {
   font-size: clamp(2.5rem, 8vw, 5rem);
   font-weight: 700;
