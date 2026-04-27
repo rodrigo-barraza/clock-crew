@@ -182,46 +182,77 @@ function ImageAttachments({ attachments }) {
 //  DiscordChat Component
 // ═════════════════════════════════════════════════════════════════
 
-export default function DiscordChatComponent({ messageCount = 50 }) {
+export default function DiscordChatComponent({ messageCount = 50, joinMode = false, inviteUrl = "https://discord.gg/clockcrew" }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    let active = true;
+    let es;
+    let retryTimeout;
 
-    async function load() {
-      try {
-        const res = await fetch(`/api/discord/messages?limit=${messageCount}`);
-        if (!res.ok) throw new Error("Failed to fetch");
-        const data = await res.json();
-        if (active) {
-          setMessages((data.messages || []).reverse());
+    function connect() {
+      es = new EventSource(`/api/discord/stream?limit=${messageCount}`);
+
+      // ── Initial batch ───────────────────────────────────────────
+      es.addEventListener("init", (e) => {
+        try {
+          const { messages: msgs } = JSON.parse(e.data);
+          // Messages arrive newest-first from the API — reverse to chronological
+          setMessages((msgs || []).reverse());
           setError(null);
           setLoading(false);
+        } catch (err) {
+          console.error("[DiscordChat] Init parse error:", err);
         }
-      } catch (err) {
-        if (active) {
-          setError(err.message);
-          setLoading(false);
+      });
+
+      // ── New messages (delta) ────────────────────────────────────
+      es.addEventListener("new", (e) => {
+        try {
+          const { messages: newMsgs } = JSON.parse(e.data);
+          if (!newMsgs?.length) return;
+
+          setMessages((prev) => {
+            // New messages arrive newest-first — reverse to chronological
+            const appended = [...prev, ...newMsgs.reverse()];
+            // Cap the buffer so the DOM doesn't grow unbounded
+            return appended.length > messageCount
+              ? appended.slice(appended.length - messageCount)
+              : appended;
+          });
+        } catch (err) {
+          console.error("[DiscordChat] New message parse error:", err);
         }
-      }
+      });
+
+      // ── Error handling with auto-reconnect ──────────────────────
+      // EventSource auto-reconnects on network errors. We only need
+      // to handle the case where the connection is permanently lost.
+      es.addEventListener("error", (_e) => {
+        if (es.readyState === EventSource.CLOSED) {
+          console.warn("[DiscordChat] SSE connection closed, retrying in 3s…");
+          es.close();
+          retryTimeout = setTimeout(connect, 3_000);
+        }
+      });
+
+      // ── Server-side error event ─────────────────────────────────
+      es.addEventListener("error", () => {
+        // Keep existing messages visible, just mark the error state
+      });
     }
 
-    load();
-    const interval = setInterval(load, 1_000);
+    connect();
+
     return () => {
-      active = false;
-      clearInterval(interval);
+      if (es) es.close();
+      if (retryTimeout) clearTimeout(retryTimeout);
     };
   }, [messageCount]);
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+
 
   return (
     <div className={styles.container} id="discord-chat">
@@ -335,18 +366,33 @@ export default function DiscordChatComponent({ messageCount = 50 }) {
           })}
       </div>
 
-      {/* ── Input Bar ─────────────────────────────────────────── */}
+      {/* ── Input Bar / Join CTA ────────────────────────────── */}
       <div className={styles.inputBar}>
-        <div className={styles.inputContainer}>
-          <span className={styles.inputPlaceholder}>
-            Message #general-chat
-          </span>
-          <div className={styles.inputIcons}>
-            <span>😀</span>
-            <span>🎁</span>
-            <span>📎</span>
+        {joinMode ? (
+          <a
+            href={inviteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.joinButton}
+            id="discord-join-button"
+          >
+            <svg className={styles.joinButtonIcon} viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.36-.76-.54-1.09c-.01-.02-.04-.03-.07-.03c-1.5.26-2.93.71-4.27 1.33c-.01 0-.02.01-.03.02c-2.72 4.07-3.47 8.03-3.1 11.95c0 .02.01.04.03.05c1.8 1.32 3.53 2.12 5.24 2.65c.03.01.06 0 .07-.02c.4-.55.76-1.13 1.07-1.74c.02-.04 0-.08-.04-.09c-.57-.22-1.11-.48-1.64-.78c-.04-.02-.04-.08-.01-.11c.11-.08.22-.17.33-.25c.02-.02.05-.02.07-.01c3.44 1.57 7.15 1.57 10.55 0c.02-.01.05-.01.07.01c.11.09.22.17.33.26c.04.03.04.09-.01.11c-.52.31-1.07.56-1.64.78c-.04.01-.05.06-.04.09c.32.61.68 1.19 1.07 1.74c.03.01.06.02.09.01c1.72-.53 3.45-1.33 5.24-2.65c.02-.01.03-.03.03-.05c.44-4.53-.73-8.46-3.1-11.95c-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.83 2.12-1.89 2.12z" />
+            </svg>
+            Join the Discord Server
+          </a>
+        ) : (
+          <div className={styles.inputContainer}>
+            <span className={styles.inputPlaceholder}>
+              Message #general-chat
+            </span>
+            <div className={styles.inputIcons}>
+              <span>😀</span>
+              <span>🎁</span>
+              <span>📎</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

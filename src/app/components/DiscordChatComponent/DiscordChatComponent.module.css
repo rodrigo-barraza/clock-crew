@@ -373,6 +373,49 @@
   font-size: 18px;
 }
 
+/* ── Join Button (CTA alternate for inputContainer) ────────────── */
+
+.joinButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #5865f2;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  text-decoration: none;
+  user-select: none;
+  transition:
+    background-color 200ms ease,
+    transform 150ms ease,
+    box-shadow 200ms ease;
+  will-change: transform;
+}
+
+.joinButton:hover {
+  background: #4752c4;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(88, 101, 242, 0.4);
+}
+
+.joinButton:active {
+  background: #3c45a5;
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(88, 101, 242, 0.3);
+}
+
+.joinButtonIcon {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
 /* ── Loading / Error States ────────────────────────────────────── */
 
 .loading {
