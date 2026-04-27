@@ -149,6 +149,8 @@ a:hover {
   width: 200vmax;
   height: 200vmax;
   transform-origin: center center;
+  /* Rotation driven by JS via --sunburst-rotation custom property */
+  transform: rotate(var(--sunburst-rotation, 0deg));
   /* 16 alternating rays — light red / light green */
   background: conic-gradient(
     from 0deg,
@@ -171,7 +173,6 @@ a:hover {
   );
   margin-top: -100vmax;
   margin-left: -100vmax;
-  animation: sunburstSpin 60s linear infinite;
   will-change: transform;
   opacity: 0.4;
   filter: saturate(0.5) brightness(0.6);
@@ -182,9 +183,8 @@ a:hover {
   z-index: 0;
 }
 
-/* Energized: faster spin, vivid colors, higher opacity */
+/* Energized: vivid colors, higher opacity (spin speed handled by JS) */
 .hero--energized::before {
-  animation-duration: 10s;
   opacity: 0.8;
   filter: saturate(1.2) brightness(1);
   /* Snap in fast on hover */
@@ -206,11 +206,6 @@ a:hover {
   );
   z-index: 1;
   pointer-events: none;
-}
-
-@keyframes sunburstSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 .hero-content {
