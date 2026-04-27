@@ -273,6 +273,32 @@
   text-decoration: underline;
 }
 
+/* Discord BOT badge — verified checkmark pill */
+.botBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  height: 16px;
+  border-radius: 3px;
+  background: #5865f2;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  vertical-align: top;
+  margin-top: 3px;
+  flex-shrink: 0;
+  line-height: 16px;
+}
+
+.botBadgeIcon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
 .timestamp {
   font-size: 12px;
   color: #949ba4;
@@ -313,6 +339,20 @@
   text-decoration: underline;
 }
 
+/* Custom server emojis (inline in message text) */
+.customEmoji {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  vertical-align: -0.4em;
+  margin: 0 1px;
+  object-fit: contain;
+  /* Crisp rendering for small pixel art / emoji sprites */
+  image-rendering: auto;
+  /* GPU-accelerated to avoid layout thrash on scroll */
+  will-change: transform;
+}
+
 /* ── Attachments (images) ──────────────────────────────────────── */
 
 .attachments {
@@ -342,10 +382,47 @@
   background: #1e1f22;
 }
 
+/* ── Tenor GIF Embeds ──────────────────────────────────────────── */
+
+.tenorGif {
+  display: block;
+  max-width: 400px;
+  max-height: 300px;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  background: #1e1f22;
+}
+
+.tenorPlaceholder {
+  width: 200px;
+  height: 150px;
+  border-radius: 8px;
+  background: #1e1f22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tenorSpinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #5865f2;
+  border-radius: 50%;
+  animation: tenorSpin 800ms linear infinite;
+}
+
+@keyframes tenorSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ── Input Bar ─────────────────────────────────────────────────── */
 
 .inputBar {
-  padding: 0 16px 24px;
+  padding: 16px 24px;
   background: #313338;
   flex-shrink: 0;
 }

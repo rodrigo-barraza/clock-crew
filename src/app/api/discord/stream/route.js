@@ -13,9 +13,9 @@ const CHANNEL_ID = "671089694397956116"; // #general-chat
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 100);
+  const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 500);
 
-  const upstreamUrl = `${TOOLS_API_URL}/discord/messages/stream?guildId=${GUILD_ID}&channelId=${CHANNEL_ID}&limit=${limit}`;
+  const upstreamUrl = `${TOOLS_API_URL}/discord/messages/stream?guildId=${GUILD_ID}&channelId=${CHANNEL_ID}&limit=${limit}&includeBots=true`;
 
   try {
     const upstream = await fetch(upstreamUrl, {

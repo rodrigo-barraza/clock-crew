@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import styles from "./DiscordChatComponent.module.css";
 
@@ -32,16 +32,67 @@ function getAvatarColor(userId) {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
+// ── Tenor URL detection ──────────────────────────────────────────
+const TENOR_URL_RE = /https?:\/\/tenor\.com\/view\/[\w-]+/g;
+
+function extractTenorUrls(content) {
+  return (content || "").match(TENOR_URL_RE) || [];
+}
+
+// ── Discord Custom Emoji ─────────────────────────────────────────
+// Matches <:name:id> (static) and <a:name:id> (animated)
+const CUSTOM_EMOJI_RE = /<(a?):([\w]+):(\d+)>/g;
+
+/**
+ * Build a Discord CDN URL for a custom server emoji.
+ * Animated emojis use .gif, static use .webp for optimal quality.
+ */
+function emojiUrl(id, animated) {
+  const ext = animated ? "gif" : "webp";
+  return `https://cdn.discordapp.com/emojis/${id}.${ext}?size=48&quality=lossless`;
+}
+
 // ── Format Discord message content ───────────────────────────────
-// Uses cleanContent (Discord.js already resolved @mentions → @Username).
+// Renders @mentions, URLs, and custom server emojis inline.
+// Uses raw `content` for emoji parsing (cleanContent strips them to :name: text).
+// Falls back to cleanContent for @mention resolution.
 function formatContent(content, cleanContent) {
+  // Prefer cleanContent for @mention resolution, but use raw content as source
+  // for custom emoji tags since cleanContent strips them to plain ":name:" text.
   const text = cleanContent || content || "";
+  const rawContent = content || "";
   if (!text) return null;
 
-  // Split on @mentions and URLs — capture groups stay in the array
-  const segments = text.split(/(@[\w.]+|https?:\/\/\S+)/g);
+  // Collect custom emoji data from raw content into a lookup so we can
+  // match against both the raw <:name:id> tokens AND the :name: fallback
+  // that cleanContent produces.
+  const emojiMap = new Map();
+  let emojiMatch;
+  CUSTOM_EMOJI_RE.lastIndex = 0;
+  while ((emojiMatch = CUSTOM_EMOJI_RE.exec(rawContent)) !== null) {
+    const [, animated, name, id] = emojiMatch;
+    emojiMap.set(name, { animated: animated === "a", id, name });
+  }
 
-  if (segments.length <= 1) {
+  // Build a combined split regex that captures @mentions, URLs, custom emoji
+  // tokens (raw form), AND the :name: fallback form from cleanContent.
+  // The order of alternation matters — more specific patterns first.
+  const emojiRawPattern = "<a?:[\\w]+:\\d+>";
+  const emojiCleanPattern = emojiMap.size > 0
+    ? `:(?:${[...emojiMap.keys()].map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")}):`
+    : null;
+
+  const splitParts = [
+    emojiRawPattern,
+    ...(emojiCleanPattern ? [emojiCleanPattern] : []),
+    "@[\\w.]+",
+    "https?:\\/\/\\S+",
+  ];
+  const splitRe = new RegExp(`(${splitParts.join("|")})`, "g");
+
+  const segments = text.split(splitRe);
+
+  if (segments.length <= 1 && emojiMap.size === 0) {
     return <span>{text}</span>;
   }
 
@@ -50,6 +101,41 @@ function formatContent(content, cleanContent) {
       {segments.map((seg, i) => {
         if (!seg) return null;
 
+        // ── Custom emoji (raw form from content) ──────────────
+        const rawEmojiMatch = /^<(a?):([\w]+):(\d+)>$/.exec(seg);
+        if (rawEmojiMatch) {
+          const [, animated, name, id] = rawEmojiMatch;
+          return (
+            <img
+              key={i}
+              src={emojiUrl(id, animated === "a")}
+              alt={`:${name}:`}
+              title={`:${name}:`}
+              className={styles.customEmoji}
+              draggable={false}
+              loading="lazy"
+            />
+          );
+        }
+
+        // ── Custom emoji (cleanContent :name: fallback) ───────
+        const cleanEmojiMatch = /^:([\w]+):$/.exec(seg);
+        if (cleanEmojiMatch && emojiMap.has(cleanEmojiMatch[1])) {
+          const emoji = emojiMap.get(cleanEmojiMatch[1]);
+          return (
+            <img
+              key={i}
+              src={emojiUrl(emoji.id, emoji.animated)}
+              alt={`:${emoji.name}:`}
+              title={`:${emoji.name}:`}
+              className={styles.customEmoji}
+              draggable={false}
+              loading="lazy"
+            />
+          );
+        }
+
+        // ── @mention ──────────────────────────────────────────
         if (seg.startsWith("@")) {
           return (
             <span key={i} className={styles.mention}>
@@ -58,7 +144,13 @@ function formatContent(content, cleanContent) {
           );
         }
 
+        // ── URL ───────────────────────────────────────────────
         if (/^https?:\/\//.test(seg)) {
+          // Skip Tenor URLs — rendered as inline GIFs below
+          if (TENOR_URL_RE.test(seg)) {
+            TENOR_URL_RE.lastIndex = 0;
+            return null;
+          }
           const display = seg.length > 50 ? seg.substring(0, 47) + "..." : seg;
           return (
             <a key={i} href={seg} target="_blank" rel="noopener noreferrer">
@@ -126,6 +218,59 @@ function isDifferentDay(a, b) {
   return new Date(a.createdAtISO).toDateString() !== new Date(b.createdAtISO).toDateString();
 }
 
+// ── Tenor GIF Embed ──────────────────────────────────────────────
+function TenorEmbed({ url }) {
+  const [gifUrl, setGifUrl] = useState(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/tenor/oembed?url=${encodeURIComponent(url)}`)
+      .then((res) => res.ok ? res.json() : Promise.reject())
+      .then((data) => {
+        if (!cancelled && data.gifUrl) setGifUrl(data.gifUrl);
+      })
+      .catch(() => { if (!cancelled) setError(true); });
+    return () => { cancelled = true; };
+  }, [url]);
+
+  if (error) return null;
+  if (!gifUrl) {
+    return (
+      <div className={styles.tenorPlaceholder}>
+        <div className={styles.tenorSpinner} />
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={styles.attachmentLink}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={gifUrl}
+        alt="Tenor GIF"
+        className={styles.tenorGif}
+        loading="lazy"
+      />
+    </a>
+  );
+}
+
+function TenorEmbeds({ content }) {
+  const urls = extractTenorUrls(content);
+  if (!urls.length) return null;
+  return (
+    <div className={styles.attachments}>
+      {urls.map((url, i) => <TenorEmbed key={i} url={url} />)}
+    </div>
+  );
+}
+
 // ── Image Attachments ────────────────────────────────────────────
 function ImageAttachments({ attachments }) {
   if (!attachments?.length) return null;
@@ -182,11 +327,20 @@ function ImageAttachments({ attachments }) {
 //  DiscordChat Component
 // ═════════════════════════════════════════════════════════════════
 
-export default function DiscordChatComponent({ messageCount = 50, joinMode = false, inviteUrl = "https://discord.gg/clockcrew" }) {
+export default function DiscordChatComponent({ messageCount = 500, joinMode = false, inviteUrl = "https://discord.gg/clockcrew" }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const scrollRef = useRef(null);
+  const isFirstLoad = useRef(true);
+
+  // ── Scroll to bottom ────────────────────────────────────────────
+  const scrollToBottom = useCallback((instant = false) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // Use instant scroll on first load, smooth on subsequent updates
+    el.scrollTo({ top: el.scrollHeight, behavior: instant ? "instant" : "smooth" });
+  }, []);
 
   useEffect(() => {
     let es;
@@ -203,6 +357,12 @@ export default function DiscordChatComponent({ messageCount = 50, joinMode = fal
           setMessages((msgs || []).reverse());
           setError(null);
           setLoading(false);
+          // Scroll to bottom after initial render — use requestAnimationFrame
+          // to ensure the DOM has painted the messages first
+          requestAnimationFrame(() => {
+            scrollToBottom(true);
+            isFirstLoad.current = false;
+          });
         } catch (err) {
           console.error("[DiscordChat] Init parse error:", err);
         }
@@ -222,6 +382,8 @@ export default function DiscordChatComponent({ messageCount = 50, joinMode = fal
               ? appended.slice(appended.length - messageCount)
               : appended;
           });
+          // Auto-scroll to bottom for new messages
+          requestAnimationFrame(() => scrollToBottom(false));
         } catch (err) {
           console.error("[DiscordChat] New message parse error:", err);
         }
@@ -250,9 +412,7 @@ export default function DiscordChatComponent({ messageCount = 50, joinMode = fal
       if (es) es.close();
       if (retryTimeout) clearTimeout(retryTimeout);
     };
-  }, [messageCount]);
-
-
+  }, [messageCount, scrollToBottom]);
 
   return (
     <div className={styles.container} id="discord-chat">
@@ -319,6 +479,7 @@ export default function DiscordChatComponent({ messageCount = 50, joinMode = fal
                       <p className={styles.messageText}>
                         {formatContent(msg.content, msg.cleanContent)}
                       </p>
+                      <TenorEmbeds content={msg.content} />
                       <ImageAttachments attachments={msg.attachments} />
                     </div>
                   </div>
@@ -350,6 +511,14 @@ export default function DiscordChatComponent({ messageCount = 50, joinMode = fal
                         >
                           {msg.author.displayName}
                         </span>
+                        {msg.author.isBot && (
+                          <span className={styles.botBadge}>
+                            <svg className={styles.botBadgeIcon} viewBox="0 0 16 16" fill="currentColor">
+                              <path d="M7.4,11.17,4,8.62,5,7.26l2,1.53L10.64,4l1.36,1Z" />
+                            </svg>
+                            BOT
+                          </span>
+                        )}
                         <span className={styles.timestamp}>
                           {formatTimestamp(msg.createdAtISO)}
                         </span>
@@ -357,6 +526,7 @@ export default function DiscordChatComponent({ messageCount = 50, joinMode = fal
                       <p className={styles.messageText}>
                         {formatContent(msg.content, msg.cleanContent)}
                       </p>
+                      <TenorEmbeds content={msg.content} />
                       <ImageAttachments attachments={msg.attachments} />
                     </div>
                   </div>
