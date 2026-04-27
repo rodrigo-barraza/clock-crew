@@ -2,6 +2,7 @@
 
 import { useRef, useCallback, useEffect } from "react";
 import DiscordChatComponent from "./components/DiscordChatComponent/DiscordChatComponent";
+import NewgroundsPortalComponent from "./components/NewgroundsPortalComponent/NewgroundsPortalComponent";
 
 // ── Sunburst spin speeds (deg/s) ──────────────────────────────────
 const IDLE_SPEED = 6;       // 360° / 60s — gentle idle rotation
@@ -77,12 +78,16 @@ export default function Home() {
           The legendary Newgrounds Flash animation collective — est. 2002
         </p>
         <section
-          aria-label="Community Discord Live Feed"
-          style={{ marginTop: "32px", width: "100%", maxWidth: "1100px" }}
+          aria-label="Community Hub"
+          className="dual-panel-section"
         >
-          <DiscordChatComponent messageCount={500} joinMode onJoinHoverChange={handleJoinHover} />
+          <div className="dual-panel-wrap">
+            <DiscordChatComponent messageCount={500} joinMode onJoinHoverChange={handleJoinHover} />
+            <NewgroundsPortalComponent />
+          </div>
         </section>
       </div>
     </main>
   );
 }
+

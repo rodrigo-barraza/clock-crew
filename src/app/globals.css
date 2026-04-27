@@ -302,3 +302,32 @@ a:hover {
 .slide-in {
   animation: slideIn var(--transition-normal) ease-out;
 }
+
+/* ── Dual Panel Layout (Discord + Portal side-by-side) ────────── */
+
+.dual-panel-section {
+  margin-top: 32px;
+  width: 100%;
+  max-width: 1800px;
+}
+
+.dual-panel-wrap {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .dual-panel-wrap {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .dual-panel-section {
+    max-width: 1100px;
+  }
+}
+

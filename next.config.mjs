@@ -35,6 +35,18 @@ const nextConfig = {
         protocol: "https",
         hostname: "media.discordapp.net",
       },
+      {
+        protocol: "https",
+        hostname: "picon.ngfiles.com",
+      },
+      {
+        protocol: "https",
+        hostname: "img.ngfiles.com",
+      },
+      {
+        protocol: "https",
+        hostname: "clockcrew.net",
+      },
     ],
   },
 
