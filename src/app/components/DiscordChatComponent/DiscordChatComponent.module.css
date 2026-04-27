@@ -612,7 +612,10 @@
   flex-shrink: 0;
   background: #2b2d31;
   border-left: 1px solid rgba(0, 0, 0, 0.24);
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Discord-style scrollbar for member sidebar */
@@ -628,7 +631,22 @@
 }
 
 .memberList {
+  flex: 1;
+  overflow-y: auto;
   padding: 12px 8px;
+  min-height: 0;
+}
+
+/* Discord-style scrollbar for member list */
+.memberList::-webkit-scrollbar {
+  width: 6px;
+}
+.memberList::-webkit-scrollbar-track {
+  background: transparent;
+}
+.memberList::-webkit-scrollbar-thumb {
+  background: #1a1b1e;
+  border-radius: 3px;
 }
 
 .memberRoleGroup {
