@@ -1,7 +1,7 @@
 services:
   clock-crew-client:
     image: clock-crew-client:latest
-    container_name: clock-crew
+    container_name: clock-crew-client
     restart: unless-stopped
     ports:
       - "3001:3001"

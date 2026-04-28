@@ -1,7 +1,7 @@
 // ============================================================
 // Clock Crew — Discord Messages API Proxy
 // ============================================================
-// Proxies requests to tools-api's Discord message search endpoint.
+// Proxies requests to tools-service's Discord message search endpoint.
 // Hardcodes the guild/channel to prevent abuse.
 // ============================================================
 

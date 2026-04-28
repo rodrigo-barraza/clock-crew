@@ -2,7 +2,7 @@
 // Clock Crew — Discord Channels API Proxy
 // ============================================================
 // Proxies requests to Lupos for live Discord channel data.
-// Falls back to tools-api message metadata when Lupos guild
+// Falls back to tools-service message metadata when Lupos guild
 // routes are unavailable.
 // Guild is hardcoded for security.
 // ============================================================
@@ -25,10 +25,10 @@ export async function GET() {
       return Response.json(data);
     }
   } catch {
-    // Lupos unavailable — fall through to tools-api fallback
+    // Lupos unavailable — fall through to tools-service fallback
   }
 
-  // ── Fallback: derive channel names from tools-api messages ───
+  // ── Fallback: derive channel names from tools-service messages ───
   // Fetch one message per whitelisted channel to extract the
   // channel.name and guild.name from the stored MongoDB data.
   try {

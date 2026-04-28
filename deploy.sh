@@ -15,7 +15,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 IMAGE_NAME="clock-crew-client"
-DISPLAY_NAME="⏰ Clock Crew"
+DISPLAY_NAME="⏰ Clock Crew Client"
 
 # ── Inject Vault credentials as Docker build args ─────────────
 PRE_BUILD() {

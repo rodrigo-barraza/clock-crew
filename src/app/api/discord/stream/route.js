@@ -1,9 +1,9 @@
 // ============================================================
 // Clock Crew — Discord Messages SSE Stream Proxy
 // ============================================================
-// Proxies the tools-api SSE stream to the browser. The browser
+// Proxies the tools-service SSE stream to the browser. The browser
 // connects via EventSource to this Next.js route, which in turn
-// opens a persistent connection to tools-api and pipes the
+// opens a persistent connection to tools-service and pipes the
 // events through. Guild is hardcoded for security; channel is
 // selectable from a whitelist.
 // ============================================================
