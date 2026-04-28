@@ -1,18 +1,24 @@
-/* ── HistoryTimelineComponent ────────────────────────────────── */
+/* ── HistoryArticle — Wikipedia-style Layout ─────────────────── */
 
-.timelineWrap {
+.article {
   display: flex;
   flex-direction: column;
-  gap: 48px;
-  animation: fadeIn 600ms ease-out;
+  gap: 0;
+  animation: articleFadeIn 500ms ease-out;
+  max-width: 900px;
 }
 
-/* ── Header ──────────────────────────────────────────────────── */
+@keyframes articleFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Lead / Header ───────────────────────────────────────────── */
 
 .header {
-  text-align: center;
-  max-width: 680px;
-  margin: 0 auto;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 24px;
 }
 
 .title {
@@ -21,53 +27,371 @@
   color: var(--text-primary);
   letter-spacing: -0.03em;
   line-height: 1.2;
+  margin-bottom: 12px;
 }
 
 .subtitle {
-  margin-top: 12px;
   font-size: 15px;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.7;
+  max-width: 720px;
 }
 
-/* ── Legend ───────────────────────────────────────────────────── */
+/* ── Info Box (right-float card) ─────────────────────────────── */
 
-.legend {
+.infoBox {
+  float: right;
+  width: 280px;
+  margin: 0 0 20px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.infoBoxHeader {
+  background: linear-gradient(135deg, #f59e0b22, #f59e0b08);
+  padding: 12px 16px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.infoBoxImage {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  display: block;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.infoBoxCaption {
+  text-align: center;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  border-bottom: 1px solid var(--border-color);
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.infoBoxTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.infoBoxTable tr {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.infoBoxTable tr:last-child {
+  border-bottom: none;
+}
+
+.infoBoxLabel {
+  padding: 8px 12px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: top;
+  width: 90px;
+  font-size: 12px;
+}
+
+.infoBoxValue {
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  font-size: 12px;
+}
+
+.infoBoxValue a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+.infoBoxValue a:hover {
+  text-decoration: underline;
+}
+
+/* ── Table of Contents ───────────────────────────────────────── */
+
+.toc {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 16px 20px;
+  margin-bottom: 28px;
+  width: fit-content;
+  min-width: 260px;
+  max-width: 380px;
+}
+
+.tocHeading {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 24px;
-  flex-wrap: wrap;
-}
-
-.legendItem {
-  display: inline-flex;
-  align-items: center;
   gap: 6px;
-  font-size: 12px;
-  font-weight: 500;
+}
+
+.tocList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: toc-counter;
+}
+
+.tocItem {
+  counter-increment: toc-counter;
+}
+
+.tocLink {
+  display: block;
+  padding: 3px 0;
+  color: var(--accent-color);
+  font-size: 13px;
+  text-decoration: none;
+  line-height: 1.6;
+  transition: color var(--transition-fast);
+}
+
+.tocLink::before {
+  content: counter(toc-counter) ". ";
   color: var(--text-tertiary);
+  font-weight: 500;
+  font-size: 12px;
 }
 
-.legendDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.tocLink:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
 }
 
-/* ── Timeline ────────────────────────────────────────────────── */
+.tocSubList {
+  list-style: none;
+  padding: 0 0 0 16px;
+  margin: 0;
+  counter-reset: toc-sub-counter;
+}
+
+.tocSubItem {
+  counter-increment: toc-sub-counter;
+}
+
+.tocSubLink {
+  display: block;
+  padding: 2px 0;
+  color: var(--accent-color);
+  font-size: 12px;
+  text-decoration: none;
+  line-height: 1.6;
+  transition: color var(--transition-fast);
+}
+
+.tocSubLink:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+/* ── Section headings ────────────────────────────────────────── */
+
+.sectionAnchor {
+  scroll-margin-top: 80px;
+}
+
+.sectionHeading {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 36px 0 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-color);
+  line-height: 1.3;
+}
+
+.sectionHeading:first-of-type {
+  margin-top: 0;
+}
+
+.subHeading {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 24px 0 8px;
+  line-height: 1.3;
+}
+
+/* ── Body text ───────────────────────────────────────────────── */
+
+.paragraph {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin: 10px 0;
+}
+
+.paragraph a {
+  color: var(--accent-color);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--transition-fast);
+}
+
+.paragraph a:hover {
+  border-bottom-color: var(--accent-color);
+}
+
+/* ── Superscript citation refs ───────────────────────────────── */
+
+.cite {
+  font-size: 10px;
+  color: var(--accent-color);
+  cursor: pointer;
+  text-decoration: none;
+  vertical-align: super;
+  line-height: 0;
+  font-weight: 600;
+  padding: 0 1px;
+}
+
+.cite:hover {
+  text-decoration: underline;
+}
+
+/* ── Blockquote ──────────────────────────────────────────────── */
+
+.blockquote {
+  border-left: 3px solid var(--accent-color);
+  margin: 16px 0;
+  padding: 12px 20px;
+  background: var(--bg-card);
+  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  font-style: italic;
+}
+
+.blockquoteAttribution {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 8px;
+}
+
+/* ── Figure (image with caption) ─────────────────────────────── */
+
+.figure {
+  margin: 20px 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  max-width: 420px;
+}
+
+.figureRight {
+  float: right;
+  margin: 4px 0 16px 20px;
+  max-width: 320px;
+}
+
+.figureLeft {
+  float: left;
+  margin: 4px 20px 16px 0;
+  max-width: 320px;
+}
+
+.figureCenter {
+  margin: 24px auto;
+  max-width: 560px;
+}
+
+.figureImage {
+  width: 100%;
+  display: block;
+  background: var(--bg-secondary);
+  image-rendering: auto;
+}
+
+.figureCaption {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+  border-top: 1px solid var(--border-color);
+}
+
+.figureCaption a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+.figureCaption a:hover {
+  text-decoration: underline;
+}
+
+/* ── Data table ──────────────────────────────────────────────── */
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 13px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+}
+
+.dataTable th {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dataTable td {
+  padding: 8px 14px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+  line-height: 1.5;
+}
+
+.dataTable tr:last-child td {
+  border-bottom: none;
+}
+
+.dataTable a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+.dataTable a:hover {
+  text-decoration: underline;
+}
+
+/* ── Timeline (retained from original, embedded as section) ──── */
 
 .timeline {
   position: relative;
-  max-width: 900px;
-  margin: 0 auto;
-  width: 100%;
+  max-width: 100%;
+  margin: 16px 0;
   padding: 0 24px;
 }
 
-/* Center vertical rail */
 .rail {
   position: absolute;
   top: 0;
@@ -84,25 +408,23 @@
   transform: translateX(-50%);
 }
 
-/* ── Timeline Item ───────────────────────────────────────────── */
-
 .item {
   position: relative;
   display: flex;
   align-items: flex-start;
-  margin-bottom: 40px;
+  margin-bottom: 36px;
   opacity: 0;
   transition:
     opacity 600ms ease-out,
     transform 600ms ease-out;
 }
 
-.item--left {
+.itemLeft {
   flex-direction: row-reverse;
   transform: translateX(-30px);
 }
 
-.item--right {
+.itemRight {
   flex-direction: row;
   transform: translateX(30px);
 }
@@ -111,8 +433,6 @@
   opacity: 1;
   transform: translateX(0);
 }
-
-/* ── Node (dot on the rail) ──────────────────────────────────── */
 
 .node {
   position: absolute;
@@ -137,19 +457,17 @@
   border-radius: 50%;
 }
 
-/* ── Card ─────────────────────────────────────────────────────── */
-
 .card {
   width: calc(50% - 36px);
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-sm);
-  padding: 20px;
+  padding: 16px;
   transition: border-color var(--transition-fast);
+}
 
-  &:hover {
-    border-color: rgba(255, 255, 255, 0.1);
-  }
+.card:hover {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .cardYear {
@@ -159,10 +477,10 @@
 }
 
 .cardTitle {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 6px 0 8px;
+  margin: 4px 0 6px;
   line-height: 1.3;
 }
 
@@ -172,9 +490,137 @@
   line-height: 1.7;
 }
 
-/* ── Responsive — Single Column ──────────────────────────────── */
+/* ── Era legend ──────────────────────────────────────────────── */
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Footnotes / References ──────────────────────────────────── */
+
+.references {
+  margin-top: 8px;
+}
+
+.refList {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  counter-reset: ref-counter;
+}
+
+.refItem {
+  counter-increment: ref-counter;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  line-height: 1.7;
+  padding: 3px 0;
+  display: flex;
+  gap: 6px;
+}
+
+.refItem::before {
+  content: "[" counter(ref-counter) "]";
+  color: var(--accent-color);
+  font-weight: 600;
+  flex-shrink: 0;
+  min-width: 24px;
+}
+
+.refItem a {
+  color: var(--accent-color);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.refItem a:hover {
+  text-decoration: underline;
+}
+
+/* ── See Also list ───────────────────────────────────────────── */
+
+.seeAlsoList {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  columns: 2;
+  column-gap: 24px;
+}
+
+.seeAlsoItem {
+  font-size: 13px;
+  padding: 3px 0;
+  break-inside: avoid;
+}
+
+.seeAlsoItem a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+.seeAlsoItem a:hover {
+  text-decoration: underline;
+}
+
+.seeAlsoItem::before {
+  content: "→ ";
+  color: var(--text-muted);
+}
+
+/* ── Clearfix ────────────────────────────────────────────────── */
+
+.clearfix::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
 
 @media (max-width: 700px) {
+  .infoBox {
+    float: none;
+    width: 100%;
+    margin: 0 0 20px 0;
+  }
+
+  .figureRight,
+  .figureLeft {
+    float: none;
+    max-width: 100%;
+    margin: 16px 0;
+  }
+
+  .toc {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .seeAlsoList {
+    columns: 1;
+  }
+
+  /* Timeline mobile */
   .rail {
     left: 16px;
   }
@@ -183,17 +629,17 @@
     left: 16px;
   }
 
-  .item--left,
-  .item--right {
+  .itemLeft,
+  .itemRight {
     flex-direction: row;
     padding-left: 40px;
   }
 
-  .item--left {
+  .itemLeft {
     transform: translateY(16px);
   }
 
-  .item--right {
+  .itemRight {
     transform: translateY(16px);
   }
 
