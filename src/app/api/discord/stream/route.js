@@ -6,7 +6,12 @@
 // opens a persistent connection to tools-service and pipes the
 // events through. Guild is hardcoded for security; channel is
 // selectable from a whitelist.
+//
+// Private MinIO URLs are rewritten on the fly to prevent Chrome's
+// Private Network Access (PNA) prompt for all visitors.
 // ============================================================
+
+import { rewriteStream } from "../rewritePrivateUrls.js";
 
 const TOOLS_SERVICE_URL = process.env.TOOLS_SERVICE_URL || "http://192.168.86.2:5590";
 const GUILD_ID = "249010731910037507"; // Clock Crew
@@ -45,8 +50,9 @@ export async function GET(request) {
       );
     }
 
-    // Pipe the upstream SSE stream directly to the browser
-    return new Response(upstream.body, {
+    // Pipe the upstream SSE stream through URL rewriting so
+    // private MinIO addresses never reach the browser.
+    return new Response(rewriteStream(upstream.body), {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",

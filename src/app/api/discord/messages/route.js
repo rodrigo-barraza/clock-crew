@@ -3,7 +3,12 @@
 // ============================================================
 // Proxies requests to tools-service's Discord message search endpoint.
 // Hardcodes the guild/channel to prevent abuse.
+//
+// Private MinIO URLs are rewritten to prevent Chrome's
+// Private Network Access (PNA) prompt for all visitors.
 // ============================================================
+
+import { rewritePrivateUrls } from "../rewritePrivateUrls.js";
 
 const TOOLS_SERVICE_URL = process.env.TOOLS_SERVICE_URL || "http://192.168.86.2:5590";
 const GUILD_ID = "249010731910037507"; // Clock Crew
@@ -26,8 +31,12 @@ export async function GET(request) {
       );
     }
 
-    const data = await res.json();
-    return Response.json(data);
+    // Sanitize private MinIO URLs before sending to the browser
+    const raw = await res.text();
+    const sanitized = rewritePrivateUrls(raw);
+    return new Response(sanitized, {
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("[discord/messages] Proxy error:", error.message);
     return Response.json(
