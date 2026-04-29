@@ -5,12 +5,12 @@
 // never attempt to load resources from private IP addresses.
 // This prevents Chrome's Private Network Access (PNA) prompt.
 //
-// Before: http://192.168.86.2:9000/discord-media/media/<key>
+// Before: http://localhost:9000/discord-media/media/<key>
 // After:  /api/media/discord-media/media/<key>
 // ============================================================
 
 const MINIO_INTERNAL_URL =
-  process.env.MINIO_INTERNAL_URL || "http://192.168.86.2:9000";
+  process.env.MINIO_INTERNAL_URL || "http://localhost:9000";
 
 /**
  * Replace all occurrences of the internal MinIO URL with the

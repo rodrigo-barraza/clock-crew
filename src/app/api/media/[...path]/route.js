@@ -11,7 +11,7 @@
 // ============================================================
 
 const MINIO_INTERNAL_URL =
-  process.env.MINIO_INTERNAL_URL || "http://192.168.86.2:9000";
+  process.env.MINIO_INTERNAL_URL || "http://localhost:9000";
 
 export async function GET(_request, { params }) {
   const segments = (await params).path;

@@ -6,7 +6,7 @@
 // Retries on 503 (Discord client not ready) with exponential backoff.
 // ============================================================
 
-const LUPOS_BOT_URL = process.env.LUPOS_BOT_URL || "http://192.168.86.2:1337";
+const LUPOS_BOT_URL = process.env.LUPOS_BOT_URL || "http://localhost:1337";
 const GUILD_ID = "249010731910037507"; // Clock Crew
 const MAX_RETRIES = 3;
 

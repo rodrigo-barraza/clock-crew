@@ -5,7 +5,7 @@
 // and injects them into process.env for the app.
 // ============================================================
 
-import { createVaultClient } from "./utils/vault-client.js";
+import { createVaultClient } from "@rodrigo-barraza/utilities/vault";
 
 // ── Bootstrap secrets at build/dev time ────────────────────────
 const vault = createVaultClient({
@@ -56,8 +56,8 @@ const nextConfig = {
 
   // Server-only env — NOT exposed to the browser
   serverRuntimeConfig: {
-    TOOLS_SERVICE_URL: secrets.TOOLS_SERVICE_URL || "http://192.168.86.2:5590",
-    CLOCK_CREW_SERVICE_URL: secrets.CLOCK_CREW_SERVICE_URL || "http://192.168.86.2:5593",
+    TOOLS_SERVICE_URL: secrets.TOOLS_SERVICE_URL || "http://localhost:5590",
+    CLOCK_CREW_SERVICE_URL: secrets.CLOCK_CREW_SERVICE_URL || "http://localhost:5593",
   },
 
   // 301 redirect www → bare domain (canonical URL)

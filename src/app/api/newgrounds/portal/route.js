@@ -4,7 +4,7 @@
 // Proxies search/browse requests to clockcrew-api /newgrounds/portal.
 // ============================================================
 
-const CLOCK_CREW_SERVICE_URL = process.env.CLOCK_CREW_SERVICE_URL || "http://192.168.86.2:5593";
+const CLOCK_CREW_SERVICE_URL = process.env.CLOCK_CREW_SERVICE_URL || "http://localhost:5593";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);

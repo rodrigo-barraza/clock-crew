@@ -10,7 +10,7 @@
 
 import { rewritePrivateUrls } from "../rewritePrivateUrls.js";
 
-const TOOLS_SERVICE_URL = process.env.TOOLS_SERVICE_URL || "http://192.168.86.2:5590";
+const TOOLS_SERVICE_URL = process.env.TOOLS_SERVICE_URL || "http://localhost:5590";
 const GUILD_ID = "249010731910037507"; // Clock Crew
 const CHANNEL_ID = "671089694397956116"; // #general-chat
 
