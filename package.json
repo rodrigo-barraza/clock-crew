@@ -15,6 +15,7 @@
     "deploy:dry": "bash deploy.sh --dry-run"
   },
   "dependencies": {
+    "@rodrigo-barraza/components": "github:rodrigo-barraza/components-library",
     "@rodrigo-barraza/utilities": "git+https://github.com/rodrigo-barraza/utilities-library.git",
     "next": "16.2.4",
     "react": "19.2.4",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useCallback, useEffect } from "react";
-import DiscordChatComponent from "./components/DiscordChatComponent/DiscordChatComponent";
+import { DiscordChatComponent } from "@rodrigo-barraza/components";
 import NewgroundsPortalComponent from "./components/NewgroundsPortalComponent/NewgroundsPortalComponent";
 
 // ── Sunburst spin speeds (deg/s) ──────────────────────────────────
@@ -90,7 +90,13 @@ export default function HomePage() {
           className="dual-panel-section"
         >
           <div className="dual-panel-wrap">
-            <DiscordChatComponent messageCount={500} joinMode onJoinHoverChange={handleJoinHover} />
+            <DiscordChatComponent
+              messageCount={500}
+              joinMode
+              onJoinHoverChange={handleJoinHover}
+              channelIds={["671089694397956116", "676318241689436170"]}
+              serverIconUrl="/animated-clock.gif"
+            />
             <NewgroundsPortalComponent />
           </div>
         </section>
